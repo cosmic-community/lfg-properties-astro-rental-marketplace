@@ -1,0 +1,297 @@
+---
+// src/pages/properties/[slug].astro
+import Layout from '@/layouts/Layout.astro';
+import ReviewCard from '@/components/ReviewCard.astro';
+import { getProperties, getPropertyBySlug, getReviewsForProperty } from '@/lib/cosmic';
+import type { GetStaticPaths } from 'astro';
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const properties = await getProperties();
+  
+  return properties.map((property) => ({
+    params: { slug: property.slug },
+    props: { property },
+  }));
+};
+
+interface Props {
+  property: any;
+}
+
+// Get the property from props (set in getStaticPaths)
+const { property } = Astro.props;
+
+// If property wasn't found in getStaticPaths, try fetching it directly
+const currentProperty = property || await getPropertyBySlug(Astro.params.slug!);
+
+if (!currentProperty) {
+  return Astro.redirect('/404');
+}
+
+// Get reviews for this property
+const reviews = await getReviewsForProperty(currentProperty.id);
+
+// Safe property access with defaults
+const propertyName = currentProperty.metadata?.property_name || currentProperty.title;
+const description = currentProperty.metadata?.description || '';
+const pricePerNight = currentProperty.metadata?.price_per_night || 0;
+const maxGuests = currentProperty.metadata?.max_guests || 0;
+const bedrooms = currentProperty.metadata?.bedrooms || 0;
+const bathrooms = currentProperty.metadata?.bathrooms || 0;
+const rating = currentProperty.metadata?.rating || 0;
+const available = currentProperty.metadata?.available || false;
+const location = currentProperty.metadata?.location;
+const category = currentProperty.metadata?.category;
+const host = currentProperty.metadata?.host;
+const images = currentProperty.metadata?.property_images || [];
+const amenities = currentProperty.metadata?.amenities || [];
+
+// Format location display
+const locationDisplay = location ? 
+  `${location.metadata?.city}, ${location.metadata?.state}, ${location.metadata?.country}` : 
+  'Location TBD';
+
+// Format rating display
+const ratingDisplay = rating > 0 ? rating.toFixed(2) : 'New';
+
+// Generate main image URL
+const mainImage = images[0];
+const mainImageUrl = mainImage ? 
+  `${mainImage.imgix_url}?w=1200&h=800&fit=crop&auto=format,compress` : 
+  '/placeholder-property.jpg';
+---
+
+<Layout 
+  title={`${propertyName} - LFG Properties`}
+  description={`Book ${propertyName} in ${locationDisplay}. ${description.replace(/<[^>]*>/g, '').substring(0, 150)}...`}
+  image={mainImageUrl}
+>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Property Header -->
+    <div class="mb-8">
+      <nav class="text-sm text-gray-500 mb-4">
+        <a href="/" class="hover:text-gray-700">Home</a>
+        <span class="mx-2">/</span>
+        <a href="/properties" class="hover:text-gray-700">Properties</a>
+        <span class="mx-2">/</span>
+        <span class="text-gray-900">{propertyName}</span>
+      </nav>
+      
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+          <h1 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">{propertyName}</h1>
+          <div class="flex items-center space-x-4 text-gray-600">
+            <span>📍 {locationDisplay}</span>
+            <span>⭐ {ratingDisplay}</span>
+            {category && (
+              <span>{category.metadata?.icon} {category.metadata?.category_name}</span>
+            )}
+          </div>
+        </div>
+        
+        <div class="text-right">
+          <div class="text-3xl font-bold text-gray-900">${pricePerNight}</div>
+          <div class="text-gray-500">per night</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Image Gallery -->
+    {images.length > 0 && (
+      <div class="mb-8">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-2 rounded-lg overflow-hidden">
+          <div class="lg:col-span-2 lg:row-span-2">
+            <img 
+              src={`${images[0].imgix_url}?w=800&h=600&fit=crop&auto=format,compress`}
+              alt={propertyName}
+              width="800"
+              height="600"
+              class="w-full h-64 lg:h-full object-cover"
+            />
+          </div>
+          
+          {images.slice(1, 5).map((image, index) => (
+            <div class="aspect-square">
+              <img 
+                src={`${image.imgix_url}?w=400&h=400&fit=crop&auto=format,compress`}
+                alt={`${propertyName} - Image ${index + 2}`}
+                width="400"
+                height="400"
+                class="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </div>
+          ))}
+        </div>
+        
+        {images.length > 5 && (
+          <p class="text-center text-gray-500 mt-2">
+            {images.length - 5} more photos available
+          </p>
+        )}
+      </div>
+    )}
+
+    <!-- Property Details -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Main Content -->
+      <div class="lg:col-span-2">
+        <!-- Property Info -->
+        <div class="mb-8">
+          <h2 class="text-2xl font-bold text-gray-900 mb-4">Property Details</h2>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="text-center p-4 bg-gray-50 rounded-lg">
+              <div class="text-2xl font-bold text-primary-600">{maxGuests}</div>
+              <div class="text-sm text-gray-600">Guests</div>
+            </div>
+            <div class="text-center p-4 bg-gray-50 rounded-lg">
+              <div class="text-2xl font-bold text-primary-600">{bedrooms}</div>
+              <div class="text-sm text-gray-600">Bedrooms</div>
+            </div>
+            <div class="text-center p-4 bg-gray-50 rounded-lg">
+              <div class="text-2xl font-bold text-primary-600">{bathrooms}</div>
+              <div class="text-sm text-gray-600">Bathrooms</div>
+            </div>
+            <div class="text-center p-4 bg-gray-50 rounded-lg">
+              <div class="text-2xl font-bold text-primary-600">{available ? '✓' : '✗'}</div>
+              <div class="text-sm text-gray-600">Available</div>
+            </div>
+          </div>
+          
+          {description && (
+            <div class="prose max-w-none">
+              <Fragment set:html={description} />
+            </div>
+          )}
+        </div>
+
+        <!-- Amenities -->
+        {amenities.length > 0 && (
+          <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Amenities</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {amenities.map((amenity) => (
+                <div class="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
+                  <span class="text-green-600">✓</span>
+                  <span class="text-gray-900">{amenity}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <!-- Host Information -->
+        {host && (
+          <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Meet Your Host</h2>
+            <div class="card p-6">
+              <div class="flex items-start space-x-4">
+                <div class="flex-shrink-0">
+                  {host.metadata?.profile_photo ? (
+                    <img 
+                      src={`${host.metadata.profile_photo.imgix_url}?w=120&h=120&fit=crop&auto=format,compress`}
+                      alt={host.metadata?.host_name || host.title}
+                      width="60"
+                      height="60"
+                      class="w-15 h-15 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div class="w-15 h-15 bg-gray-300 rounded-full flex items-center justify-center">
+                      <span class="text-gray-600 text-2xl">👤</span>
+                    </div>
+                  )}
+                </div>
+                
+                <div class="flex-1">
+                  <div class="flex items-center space-x-2 mb-2">
+                    <h3 class="text-xl font-semibold text-gray-900">
+                      {host.metadata?.host_name || host.title}
+                    </h3>
+                    {host.metadata?.verified && (
+                      <span class="badge badge-success">✓ Verified</span>
+                    )}
+                  </div>
+                  
+                  {host.metadata?.bio && (
+                    <p class="text-gray-700 mb-3">{host.metadata.bio}</p>
+                  )}
+                  
+                  <div class="flex items-center space-x-4 text-sm text-gray-600">
+                    {host.metadata?.response_rate && (
+                      <span>Response rate: {host.metadata.response_rate}%</span>
+                    )}
+                    {host.metadata?.member_since && (
+                      <span>Member since {new Date(host.metadata.member_since).getFullYear()}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <!-- Reviews -->
+        {reviews.length > 0 && (
+          <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">
+              Guest Reviews ({reviews.length})
+            </h2>
+            <div class="space-y-6">
+              {reviews.map((review) => (
+                <ReviewCard review={review} showProperty={false} />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <!-- Booking Sidebar -->
+      <div class="lg:col-span-1">
+        <div class="card p-6 sticky top-8">
+          <div class="text-center mb-6">
+            <div class="text-3xl font-bold text-gray-900 mb-2">
+              ${pricePerNight}
+              <span class="text-lg font-normal text-gray-500">/ night</span>
+            </div>
+            {rating > 0 && (
+              <div class="text-primary-600">⭐ {ratingDisplay} rating</div>
+            )}
+          </div>
+          
+          <div class="space-y-4 mb-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Check-in</label>
+              <input 
+                type="date" 
+                class="w-full p-3 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Check-out</label>
+              <input 
+                type="date" 
+                class="w-full p-3 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Guests</label>
+              <select class="w-full p-3 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500">
+                {Array.from({ length: maxGuests }, (_, i) => i + 1).map((num) => (
+                  <option value={num}>{num} guest{num !== 1 ? 's' : ''}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          
+          <button class="btn-primary w-full mb-4">
+            {available ? 'Book Now' : 'Contact Host'}
+          </button>
+          
+          <p class="text-xs text-gray-500 text-center">
+            You won't be charged yet
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>

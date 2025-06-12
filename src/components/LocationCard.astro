@@ -1,0 +1,56 @@
+---
+// src/components/LocationCard.astro
+import type { Location } from '@/types';
+
+export interface Props {
+  location: Location;
+  propertyCount?: number;
+  className?: string;
+}
+
+const { location, propertyCount, className = "" } = Astro.props;
+
+// Safe property access with defaults
+const city = location.metadata?.city || location.title;
+const state = location.metadata?.state || '';
+const country = location.metadata?.country || '';
+const description = location.metadata?.description || '';
+
+// Build location display
+const locationDisplay = [city, state].filter(Boolean).join(', ');
+const fullLocation = [locationDisplay, country].filter(Boolean).join(', ');
+---
+
+<article class={`card p-6 hover:shadow-lg transition-shadow ${className}`}>
+  <div class="text-center">
+    <div class="mb-4">
+      <span class="text-4xl">📍</span>
+    </div>
+    
+    <h3 class="text-xl font-semibold text-gray-900 mb-2">
+      <a href={`/locations/${location.slug}`} class="hover:text-primary-600 transition-colors">
+        {locationDisplay}
+      </a>
+    </h3>
+    
+    <p class="text-sm text-gray-500 mb-3">{country}</p>
+    
+    {description && (
+      <p class="text-gray-600 mb-4 line-clamp-3">
+        {description}
+      </p>
+    )}
+    
+    {typeof propertyCount === 'number' && (
+      <div class="mb-4">
+        <span class="badge badge-info">
+          {propertyCount} propert{propertyCount !== 1 ? 'ies' : 'y'}
+        </span>
+      </div>
+    )}
+    
+    <a href={`/locations/${location.slug}`} class="btn-outline w-full">
+      Explore {city}
+    </a>
+  </div>
+</article>

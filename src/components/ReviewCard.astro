@@ -1,0 +1,71 @@
+---
+// src/components/ReviewCard.astro
+import type { Review } from '@/types';
+
+export interface Props {
+  review: Review;
+  showProperty?: boolean;
+  className?: string;
+}
+
+const { review, showProperty = true, className = "" } = Astro.props;
+
+// Safe property access with defaults
+const guestName = review.metadata?.guest_name || 'Anonymous';
+const rating = review.metadata?.rating || 0;
+const reviewText = review.metadata?.review_text || '';
+const stayDate = review.metadata?.stay_date || '';
+const property = review.metadata?.property;
+
+// Format stay date
+const stayDateFormatted = stayDate ? 
+  new Date(stayDate).toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'long' 
+  }) : '';
+
+// Generate star display
+const stars = Array.from({ length: 5 }, (_, i) => i < rating);
+---
+
+<article class={`card p-6 ${className}`}>
+  <div class="flex items-start space-x-4">
+    <div class="flex-shrink-0">
+      <div class="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
+        <span class="text-gray-600 text-lg">👤</span>
+      </div>
+    </div>
+    
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-lg font-semibold text-gray-900">{guestName}</h3>
+        <div class="flex items-center space-x-1">
+          {stars.map((filled) => (
+            <span class={filled ? 'text-yellow-400' : 'text-gray-300'}>★</span>
+          ))}
+        </div>
+      </div>
+      
+      {stayDateFormatted && (
+        <p class="text-sm text-gray-500 mb-3">Stayed in {stayDateFormatted}</p>
+      )}
+      
+      {showProperty && property && (
+        <div class="mb-3">
+          <a 
+            href={`/properties/${property.slug}`}
+            class="text-sm text-primary-600 hover:text-primary-700 font-medium"
+          >
+            {property.metadata?.property_name || property.title}
+          </a>
+        </div>
+      )}
+      
+      {reviewText && (
+        <blockquote class="text-gray-700 leading-relaxed">
+          "{reviewText}"
+        </blockquote>
+      )}
+    </div>
+  </div>
+</article>

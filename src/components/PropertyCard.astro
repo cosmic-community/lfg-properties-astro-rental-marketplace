@@ -1,0 +1,144 @@
+---
+// src/components/PropertyCard.astro
+import type { Property } from '@/types';
+
+export interface Props {
+  property: Property;
+  showLocation?: boolean;
+  className?: string;
+}
+
+const { property, showLocation = true, className = "" } = Astro.props;
+
+// Safe property access with defaults
+const propertyName = property.metadata?.property_name || property.title;
+const pricePerNight = property.metadata?.price_per_night || 0;
+const rating = property.metadata?.rating || 0;
+const maxGuests = property.metadata?.max_guests || 0;
+const bedrooms = property.metadata?.bedrooms || 0;
+const bathrooms = property.metadata?.bathrooms || 0;
+const location = property.metadata?.location;
+const category = property.metadata?.category;
+const host = property.metadata?.host;
+const images = property.metadata?.property_images || [];
+const amenities = property.metadata?.amenities || [];
+
+// Get the first image for the card
+const mainImage = images[0];
+const imageUrl = mainImage ? 
+  `${mainImage.imgix_url}?w=800&h=600&fit=crop&auto=format,compress` : 
+  '/placeholder-property.jpg';
+
+// Format rating display
+const ratingDisplay = rating > 0 ? rating.toFixed(2) : 'New';
+
+// Format location display
+const locationDisplay = location ? 
+  `${location.metadata?.city}, ${location.metadata?.state}` : 
+  'Location TBD';
+---
+
+<article class={`card overflow-hidden ${className}`}>
+  <div class="relative">
+    <img 
+      src={imageUrl}
+      alt={propertyName}
+      width="400"
+      height="300"
+      class="w-full h-48 sm:h-64 object-cover"
+      loading="lazy"
+    />
+    
+    {category && (
+      <div class="absolute top-4 left-4">
+        <span class="badge bg-white text-gray-900 shadow-sm">
+          {category.metadata?.icon} {category.metadata?.category_name}
+        </span>
+      </div>
+    )}
+    
+    <div class="absolute top-4 right-4">
+      <div class="badge bg-white text-gray-900 shadow-sm">
+        ⭐ {ratingDisplay}
+      </div>
+    </div>
+  </div>
+  
+  <div class="p-6">
+    <div class="flex items-start justify-between mb-2">
+      <h3 class="text-lg font-semibold text-gray-900 line-clamp-2">
+        <a href={`/properties/${property.slug}`} class="hover:text-primary-600 transition-colors">
+          {propertyName}
+        </a>
+      </h3>
+    </div>
+    
+    {showLocation && location && (
+      <p class="text-sm text-gray-500 mb-2">
+        📍 {locationDisplay}
+      </p>
+    )}
+    
+    <div class="flex items-center text-sm text-gray-600 mb-3 space-x-4">
+      <span>{maxGuests} guests</span>
+      <span>•</span>
+      <span>{bedrooms} bedroom{bedrooms !== 1 ? 's' : ''}</span>
+      <span>•</span>
+      <span>{bathrooms} bathroom{bathrooms !== 1 ? 's' : ''}</span>
+    </div>
+    
+    {amenities.length > 0 && (
+      <div class="flex flex-wrap gap-1 mb-3">
+        {amenities.slice(0, 3).map((amenity) => (
+          <span class="badge badge-info text-xs">{amenity}</span>
+        ))}
+        {amenities.length > 3 && (
+          <span class="badge bg-gray-100 text-gray-600 text-xs">
+            +{amenities.length - 3} more
+          </span>
+        )}
+      </div>
+    )}
+    
+    {host && (
+      <div class="flex items-center mb-4">
+        <div class="flex-shrink-0 mr-3">
+          {host.metadata?.profile_photo ? (
+            <img 
+              src={`${host.metadata.profile_photo.imgix_url}?w=64&h=64&fit=crop&auto=format,compress`}
+              alt={host.metadata?.host_name || host.title}
+              width="32"
+              height="32"
+              class="w-8 h-8 rounded-full object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+              <span class="text-gray-600 text-sm">👤</span>
+            </div>
+          )}
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm text-gray-900 font-medium truncate">
+            Host: {host.metadata?.host_name || host.title}
+          </p>
+          {host.metadata?.verified && (
+            <p class="text-xs text-green-600">✓ Verified Host</p>
+          )}
+        </div>
+      </div>
+    )}
+    
+    <div class="flex items-center justify-between">
+      <div class="text-right">
+        <p class="text-2xl font-bold text-gray-900">
+          ${pricePerNight}
+          <span class="text-sm font-normal text-gray-500">/ night</span>
+        </p>
+      </div>
+      <a href={`/properties/${property.slug}`} class="btn-primary">
+        View Details
+      </a>
+    </div>
+  </div>
+</article>

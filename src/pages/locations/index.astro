@@ -1,0 +1,54 @@
+---
+// src/pages/locations/index.astro
+import Layout from '@/layouts/Layout.astro';
+import LocationCard from '@/components/LocationCard.astro';
+import { getLocations, getProperties } from '@/lib/cosmic';
+
+const locations = await getLocations();
+const properties = await getProperties();
+
+// Count properties per location
+const locationPropertyCounts = locations.map(location => {
+  const count = properties.filter(property => 
+    property.metadata?.location?.id === location.id
+  ).length;
+  return { location, count };
+});
+---
+
+<Layout 
+  title="All Locations - LFG Properties"
+  description="Explore vacation rental destinations worldwide. Discover amazing cities and find your perfect accommodation."
+>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-bold text-gray-900 mb-4">Explore Destinations</h1>
+      <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+        Discover {locations.length} amazing destinations with unique accommodations
+      </p>
+    </div>
+
+    {locations.length > 0 ? (
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {locationPropertyCounts.map(({ location, count }) => (
+          <LocationCard 
+            location={location} 
+            propertyCount={count}
+            className="animate-fade-in" 
+          />
+        ))}
+      </div>
+    ) : (
+      <div class="text-center py-12">
+        <div class="text-6xl mb-4">📍</div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">No Locations Found</h2>
+        <p class="text-gray-600 mb-8">
+          We're currently updating our destination listings. Please check back soon!
+        </p>
+        <a href="/" class="btn-primary">
+          Return Home
+        </a>
+      </div>
+    )}
+  </div>
+</Layout>
