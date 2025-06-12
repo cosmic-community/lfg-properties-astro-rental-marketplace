@@ -1,5 +1,5 @@
 import { createBucketClient } from '@cosmicjs/sdk';
-import type { Property, Host, Location, Category, Review, Booking, CosmicResponse } from '@/types';
+import type { Property, Host, Location, Category, Review, Booking } from '@/types';
 
 if (!import.meta.env.COSMIC_BUCKET_SLUG) {
   throw new Error('COSMIC_BUCKET_SLUG environment variable is required');
@@ -16,6 +16,11 @@ export const cosmic = createBucketClient({
   apiEnvironment: "staging"
 });
 
+// Type guard for error objects with status property
+function isErrorWithStatus(error: unknown): error is { status: number } {
+  return typeof error === 'object' && error !== null && 'status' in error;
+}
+
 // Properties API functions
 export async function getProperties(): Promise<Property[]> {
   try {
@@ -25,8 +30,8 @@ export async function getProperties(): Promise<Property[]> {
       .depth(1);
     
     return response.objects as Property[];
-  } catch (error) {
-    if (error.status === 404) {
+  } catch (error: unknown) {
+    if (isErrorWithStatus(error) && error.status === 404) {
       return [];
     }
     console.error('Error fetching properties:', error);
@@ -48,8 +53,8 @@ export async function getPropertyBySlug(slug: string): Promise<Property | null> 
     }
     
     return property;
-  } catch (error) {
-    if (error.status === 404) {
+  } catch (error: unknown) {
+    if (isErrorWithStatus(error) && error.status === 404) {
       return null;
     }
     console.error('Error fetching property:', error);
@@ -68,8 +73,8 @@ export async function getPropertiesByLocation(locationId: string): Promise<Prope
       .depth(1);
     
     return response.objects as Property[];
-  } catch (error) {
-    if (error.status === 404) {
+  } catch (error: unknown) {
+    if (isErrorWithStatus(error) && error.status === 404) {
       return [];
     }
     console.error('Error fetching properties by location:', error);
@@ -88,8 +93,8 @@ export async function getPropertiesByCategory(categoryId: string): Promise<Prope
       .depth(1);
     
     return response.objects as Property[];
-  } catch (error) {
-    if (error.status === 404) {
+  } catch (error: unknown) {
+    if (isErrorWithStatus(error) && error.status === 404) {
       return [];
     }
     console.error('Error fetching properties by category:', error);
@@ -105,8 +110,8 @@ export async function getLocations(): Promise<Location[]> {
       .props(['id', 'title', 'slug', 'metadata']);
     
     return response.objects as Location[];
-  } catch (error) {
-    if (error.status === 404) {
+  } catch (error: unknown) {
+    if (isErrorWithStatus(error) && error.status === 404) {
       return [];
     }
     console.error('Error fetching locations:', error);
@@ -122,8 +127,8 @@ export async function getLocationBySlug(slug: string): Promise<Location | null> 
     });
     
     return response.object as Location || null;
-  } catch (error) {
-    if (error.status === 404) {
+  } catch (error: unknown) {
+    if (isErrorWithStatus(error) && error.status === 404) {
       return null;
     }
     console.error('Error fetching location:', error);
@@ -139,8 +144,8 @@ export async function getCategories(): Promise<Category[]> {
       .props(['id', 'title', 'slug', 'metadata']);
     
     return response.objects as Category[];
-  } catch (error) {
-    if (error.status === 404) {
+  } catch (error: unknown) {
+    if (isErrorWithStatus(error) && error.status === 404) {
       return [];
     }
     console.error('Error fetching categories:', error);
@@ -156,8 +161,8 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
     });
     
     return response.object as Category || null;
-  } catch (error) {
-    if (error.status === 404) {
+  } catch (error: unknown) {
+    if (isErrorWithStatus(error) && error.status === 404) {
       return null;
     }
     console.error('Error fetching category:', error);
@@ -173,8 +178,8 @@ export async function getHosts(): Promise<Host[]> {
       .props(['id', 'title', 'slug', 'metadata']);
     
     return response.objects as Host[];
-  } catch (error) {
-    if (error.status === 404) {
+  } catch (error: unknown) {
+    if (isErrorWithStatus(error) && error.status === 404) {
       return [];
     }
     console.error('Error fetching hosts:', error);
@@ -190,8 +195,8 @@ export async function getHostBySlug(slug: string): Promise<Host | null> {
     });
     
     return response.object as Host || null;
-  } catch (error) {
-    if (error.status === 404) {
+  } catch (error: unknown) {
+    if (isErrorWithStatus(error) && error.status === 404) {
       return null;
     }
     console.error('Error fetching host:', error);
@@ -208,8 +213,8 @@ export async function getReviews(): Promise<Review[]> {
       .depth(1);
     
     return response.objects as Review[];
-  } catch (error) {
-    if (error.status === 404) {
+  } catch (error: unknown) {
+    if (isErrorWithStatus(error) && error.status === 404) {
       return [];
     }
     console.error('Error fetching reviews:', error);
@@ -228,8 +233,8 @@ export async function getReviewsForProperty(propertyId: string): Promise<Review[
       .depth(1);
     
     return response.objects as Review[];
-  } catch (error) {
-    if (error.status === 404) {
+  } catch (error: unknown) {
+    if (isErrorWithStatus(error) && error.status === 404) {
       return [];
     }
     console.error('Error fetching reviews for property:', error);
@@ -246,8 +251,8 @@ export async function getBookings(): Promise<Booking[]> {
       .depth(1);
     
     return response.objects as Booking[];
-  } catch (error) {
-    if (error.status === 404) {
+  } catch (error: unknown) {
+    if (isErrorWithStatus(error) && error.status === 404) {
       return [];
     }
     console.error('Error fetching bookings:', error);

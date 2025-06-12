@@ -22,7 +22,9 @@ interface Props {
 const { property } = Astro.props;
 
 // If property wasn't found in getStaticPaths, try fetching it directly
-const currentProperty = property || await getPropertyBySlug(Astro.params.slug!);
+// Convert slug to string to ensure type safety
+const slug = typeof Astro.params.slug === 'string' ? Astro.params.slug : String(Astro.params.slug);
+const currentProperty = property || await getPropertyBySlug(slug);
 
 if (!currentProperty) {
   return Astro.redirect('/404');
@@ -110,7 +112,7 @@ const mainImageUrl = mainImage ?
             />
           </div>
           
-          {images.slice(1, 5).map((image, index) => (
+          {images.slice(1, 5).map((image: any, index: number) => (
             <div class="aspect-square">
               <img 
                 src={`${image.imgix_url}?w=400&h=400&fit=crop&auto=format,compress`}
@@ -170,7 +172,7 @@ const mainImageUrl = mainImage ?
           <div class="mb-8">
             <h2 class="text-2xl font-bold text-gray-900 mb-4">Amenities</h2>
             <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {amenities.map((amenity) => (
+              {amenities.map((amenity: string) => (
                 <div class="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
                   <span class="text-green-600">✓</span>
                   <span class="text-gray-900">{amenity}</span>

@@ -18,7 +18,6 @@ const description = location.metadata?.description || '';
 
 // Build location display
 const locationDisplay = [city, state].filter(Boolean).join(', ');
-const fullLocation = [locationDisplay, country].filter(Boolean).join(', ');
 ---
 
 <article class={`card p-6 hover:shadow-lg transition-shadow ${className}`}>
